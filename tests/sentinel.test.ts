@@ -10,6 +10,7 @@ import type { NewAlert, SentinelContext } from "@/sentinel/context";
 import { receiveWebhook } from "@/sentinel/inbox";
 import { processPendingEvents } from "@/sentinel/process";
 import { discoverLocations, evaluateSyncHealth, pollSyncStatus } from "@/sentinel/sync-monitor";
+import { purgeOldPayloads } from "@/sentinel/retention";
 import { runTick } from "@/sentinel/tick";
 import { checkWebhookEndpoints } from "@/sentinel/watchdog";
 import { createTrackedAppointment, safeRetry } from "@/sentinel/writes";
@@ -214,6 +215,23 @@ describe("webhook inbox", () => {
     const stored = JSON.stringify(await db.select().from(events));
     expect(stored).toContain("[redacted]");
     expect(stored).not.toMatch(/"(first_name|last_name|email|date_of_birth)":"(?!\[redacted\])/);
+  });
+});
+
+describe("retention", () => {
+  beforeEach(() => setUp());
+
+  it("drops stored payloads after 7 days but keeps the normalized event", async () => {
+    const body = JSON.stringify(loadDocFixture("patient_created"));
+    const ts = clock.toISOString();
+    await receiveWebhook(ctx, { rawBody: Buffer.from(body), timestamp: ts, signature: computeSignature(body, ts, MOCK_WEBHOOK_SECRET) });
+    expect(await purgeOldPayloads(ctx)).toBe(0);
+    clock = new Date(clock.getTime() + 8 * 86_400_000);
+    expect(await purgeOldPayloads(ctx)).toBe(1);
+    expect(await purgeOldPayloads(ctx)).toBe(0);
+    const [row] = await db.select().from(events);
+    expect(row!.payload).toEqual({ purged: true });
+    expect(row!.normalized.eventName).toBe("patient_created");
   });
 });
 
