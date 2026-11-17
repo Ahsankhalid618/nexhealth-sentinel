@@ -1,0 +1,19 @@
+{
+  "source": "https://nexhealth.info",
+  "retrieved_at": "2026-11-17T20:41:45.104Z",
+  "request": {
+    "method": "GET",
+    "path": "/sync_status",
+    "query": {
+      "subdomain": "eds-solutions-demo-practice"
+    }
+  },
+  "status": 200,
+  "response": {
+    "code": true,
+    "description": null,
+    "error": null,
+    "data": [],
+    "count": 0
+  }
+}

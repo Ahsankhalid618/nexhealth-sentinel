@@ -1,0 +1,91 @@
+{
+  "base_url": "https://nexhealth.info",
+  "api_version": "v3.0.0",
+  "ran_at": "2026-11-17T20:41:45.171Z",
+  "observations": [
+    {
+      "claim": "POST /authenticates status",
+      "source": "reference: postauthenticates",
+      "expected": "201",
+      "observed": "201",
+      "match": true
+    },
+    {
+      "claim": "Bearer token lifetime",
+      "source": "reference: authentication",
+      "expected": "about 60 minutes",
+      "observed": "60 minutes",
+      "match": true
+    },
+    {
+      "claim": "Request without Nex-Api-Version",
+      "source": "reference: versioning",
+      "expected": "404",
+      "observed": "404",
+      "match": true
+    },
+    {
+      "claim": "GET /locations nests locations under institutions",
+      "source": "reference: getlocations",
+      "expected": "data[].locations[]",
+      "observed": "1 location(s), tz=America/New_York",
+      "match": true
+    },
+    {
+      "claim": "GET /appointments uses cursor page_info",
+      "source": "reference: pagination",
+      "expected": "page_info with end_cursor/has_next_page",
+      "observed": "has_previous_page, has_next_page, start_cursor, end_cursor",
+      "match": true
+    },
+    {
+      "claim": "Unknown query parameter",
+      "source": "reference: introduction",
+      "expected": "200 with \"Note that following parameters are ignored\" in description",
+      "observed": "200 \"Note that following parameters are ignored: sentinel_unknown_param.\"",
+      "match": true
+    },
+    {
+      "claim": "Both start_cursor and end_cursor",
+      "source": "reference: pagination",
+      "expected": "400",
+      "observed": "400",
+      "match": true
+    },
+    {
+      "claim": "GET /appointments without location_id or foreign_id",
+      "source": "reference: getappointments",
+      "expected": "400",
+      "observed": "400",
+      "match": true
+    },
+    {
+      "claim": "GET /available_slots",
+      "source": "reference: getavailableslots",
+      "expected": "200 (needs lids[] and pids[] or appointment_type_id)",
+      "observed": "200",
+      "match": true
+    },
+    {
+      "claim": "Sandbox GET /sync_status",
+      "source": "guide: sandbox",
+      "expected": "empty list (the sandbox has no sync)",
+      "observed": "0 entries",
+      "match": true
+    },
+    {
+      "claim": "GET /webhook_endpoints",
+      "source": "reference: getwebhookendpoints",
+      "expected": "200, list (includes secret_key)",
+      "observed": "200, 0 endpoint(s)",
+      "match": true
+    },
+    {
+      "claim": "Rate-limit headers on a normal response",
+      "source": "reference: rate limits",
+      "expected": "informational: 429 responses carry Retry-After",
+      "observed": "none",
+      "match": null
+    }
+  ]
+}

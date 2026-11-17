@@ -1,0 +1,18 @@
+{
+  "source": "https://nexhealth.info",
+  "retrieved_at": "2026-11-17T20:41:43.654Z",
+  "request": {
+    "method": "POST",
+    "path": "/authenticates"
+  },
+  "status": 201,
+  "response": {
+    "code": true,
+    "description": "Authenticated",
+    "error": null,
+    "data": {
+      "token": "[redacted]"
+    },
+    "count": null
+  }
+}

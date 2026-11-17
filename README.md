@@ -10,7 +10,7 @@ After `pnpm sim sync-down-business-hours`, open the dashboard and filter by `sim
 
 > **Unofficial.** Not affiliated with or endorsed by NexHealth. Built from NexHealth's public documentation (retrieved November 2026).
 >
-> **Not yet run against a real sandbox.** Everything here was built and tested against the documented behaviour, using a mock. [`scripts/sandbox-smoke.ts`](scripts/sandbox-smoke.ts) and the [live sandbox guide](docs/live-sandbox.md) are how to check it against the real API with a sandbox key.
+> **Sandbox smoke test (2026-11-18):** [`scripts/sandbox-smoke.ts`](scripts/sandbox-smoke.ts) was run against the real NexHealth sandbox — **12/12 checks passed**, 0 diffs vs the published docs. Sanitized responses live in [`fixtures/sandbox/`](fixtures/sandbox/) and drive shape contract tests for the mock. **Signed webhook delivery has not been verified live yet** (see [docs/live-sandbox.md](docs/live-sandbox.md)).
 
 ## Why
 

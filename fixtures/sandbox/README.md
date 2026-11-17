@@ -6,4 +6,4 @@ Files here are produced by **`scripts/sandbox-smoke.ts`** (read-only API exercis
 - API keys and bearer tokens are never written.
 - Review before committing; this directory may contain institution-specific shapes.
 
-Nothing in this folder is checked in by default except this README.
+**2026-11-18:** Captures from a real sandbox smoke run (12/12 checks in `report.json`) are checked in here to anchor mock shape tests. Webhook payload captures stay under `captures/` (gitignored).
