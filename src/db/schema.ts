@@ -10,6 +10,7 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import type { NormalizedEvent, NormalizedRecord } from "@/core/normalize";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
 
@@ -27,6 +28,8 @@ export const events = pgTable(
     eventOutcome: text("event_outcome"),
     eventTime: ts("event_time"),
     recordIds: jsonb("record_ids").$type<string[]>().notNull(),
+    /** What processing needs, with patient names reduced to initials. */
+    normalized: jsonb("normalized").$type<StoredEvent>().notNull(),
     /** Patient-like fields are redacted before storage; the raw body is never persisted. */
     payload: jsonb("payload").notNull(),
     priorFailedAttempts: integer("prior_failed_attempts").notNull().default(0),
@@ -143,6 +146,9 @@ export const alerts = pgTable("alerts", {
   resolvedAt: ts("resolved_at"),
   notified: boolean("notified").notNull().default(false),
 });
+
+export type StoredRecord = Omit<NormalizedRecord, "patientName"> & { patientInitials: string | null };
+export type StoredEvent = Omit<NormalizedEvent, "records"> & { records: StoredRecord[] };
 
 export interface AppointmentRequest {
   patient_id: number;

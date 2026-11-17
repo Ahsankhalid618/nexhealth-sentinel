@@ -23,6 +23,7 @@ CREATE TABLE "events" (
 	"event_outcome" text,
 	"event_time" timestamp with time zone,
 	"record_ids" jsonb NOT NULL,
+	"normalized" jsonb NOT NULL,
 	"payload" jsonb NOT NULL,
 	"prior_failed_attempts" integer DEFAULT 0 NOT NULL,
 	"duplicate_count" integer DEFAULT 0 NOT NULL,
