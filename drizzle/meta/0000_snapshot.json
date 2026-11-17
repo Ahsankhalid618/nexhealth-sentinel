@@ -1,5 +1,5 @@
 {
-  "id": "8468d030-1bff-4f85-8d74-5f2f130b2d4b",
+  "id": "13b26d77-6f9b-498e-a60e-ec6598feccc5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -146,6 +146,12 @@
         },
         "record_ids": {
           "name": "record_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized": {
+          "name": "normalized",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
