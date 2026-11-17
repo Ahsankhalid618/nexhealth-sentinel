@@ -65,6 +65,7 @@ interface Route {
   path: string;
   query: string[];
   required: string[];
+  forbiddenBodyKeys?: string[];
   auth?: false;
   handler: (ctx: RouteContext) => Response | Promise<Response>;
 }
@@ -423,11 +424,6 @@ export class MockNexHealth {
       }
     }
 
-    for (const name of route.required) {
-      if (!url.searchParams.has(name)) return fail(400, `${name} is missing`);
-    }
-    const ignored = [...new Set(url.searchParams.keys())].filter((k) => !route.query.includes(k));
-
     let body: Record<string, unknown> | null = null;
     if (req.method === "POST" || req.method === "PATCH") {
       try {
@@ -436,6 +432,14 @@ export class MockNexHealth {
         body = null;
       }
     }
+    if (body && route.forbiddenBodyKeys?.some((k) => k in body)) {
+      return fail(403, "You don't have access to perform this action.");
+    }
+
+    for (const name of route.required) {
+      if (!url.searchParams.has(name)) return fail(400, `${name} is missing`);
+    }
+    const ignored = [...new Set(url.searchParams.keys())].filter((k) => !route.query.includes(k));
 
     const res = await route.handler({ headers: req.headers, params, query: url.searchParams, body });
     if (!ignored.length || !res.ok) return res;
@@ -565,11 +569,11 @@ export class MockNexHealth {
       method: "POST",
       path: "/webhook_endpoints/{id}/webhook_subscriptions",
       query: ["subdomain"],
-      required: [],
+      required: ["subdomain"],
+      // "Sending subdomain in the request body returns 403."
+      forbiddenBodyKeys: ["subdomain"],
       handler: ({ params, query, body }) => {
-        if (body && "subdomain" in body) return fail(403, "You don't have access to perform this action.");
-        const subdomain = query.get("subdomain");
-        if (!subdomain) return fail(400, "subdomain is missing");
+        const subdomain = query.get("subdomain")!;
         if (!this.endpoints.some((e) => e.id === Number(params.id))) return fail(404, "Webhook endpoint not found");
         const resourceType = String(body?.resource_type ?? "");
         if (!SUBSCRIBABLE[resourceType]) return fail(400, "Invalid value for parameter resource_type");
