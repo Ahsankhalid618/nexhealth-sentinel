@@ -1,0 +1,26 @@
+{
+  "institution_id": 1,
+  "subdomain": "test-subdomain",
+  "webhook_subscription_id": 2,
+  "resource_type": "SyncStatus",
+  "event_name": "sync_status_write_change.red",
+  "event_time": "2024-03-21T17:52:47.824Z",
+  "data": {
+    "syncstatus": {
+      "institution_id": 1,
+      "sync_source_type": "DataSource",
+      "sync_source_name": "My Source",
+      "emr": {
+        "id": 11,
+        "name": "dentrix",
+        "display_name": "Dentrix",
+        "type": "onprem"
+      },
+      "read_status": "green",
+      "read_status_at": "2020-06-05T20:16:57.007Z",
+      "write_status": "red",
+      "write_status_at": "2020-06-05T20:16:57.007Z",
+      "locations": null
+    }
+  }
+}
