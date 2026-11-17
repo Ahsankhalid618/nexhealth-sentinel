@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
-import { reconcileCursors, syncHealth } from "@/db/schema";
+import { reconcileCursors } from "@/db/schema";
 import { raiseAlert } from "./alerts";
 import type { SentinelContext } from "./context";
+import { monitoredLocations } from "./sync-monitor";
 import { recordVersion } from "./versions";
 import { applyAppointmentEvidence } from "./writes";
 
@@ -19,7 +20,7 @@ export interface ReconcileReport {
  * way to get them back. The first run per location only records a baseline.
  */
 export async function reconcileAppointments(ctx: SentinelContext): Promise<ReconcileReport> {
-  const locations = await ctx.db.select().from(syncHealth);
+  const locations = await monitoredLocations(ctx);
   const report: ReconcileReport = { locations: locations.length, scanned: 0, recovered: 0 };
   const { pastDays, futureDays, overlapMin } = ctx.config.reconcile;
 

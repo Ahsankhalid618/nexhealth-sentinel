@@ -18,6 +18,8 @@ export interface BookingInput {
   subdomain: string;
   locationId: number;
   appointment: AppointmentRequest;
+  /** Only the initials are stored, for the dashboard. */
+  patientName?: string | null;
 }
 
 export interface BookingResult {
@@ -100,6 +102,7 @@ export async function createTrackedAppointment(
       preflight,
       request: storedRequest(input.appointment),
       startTime: new Date(input.appointment.start_time),
+      patientInitials: input.patientName ? initials(input.patientName) : null,
       retryOfId,
       createdAt: now,
       updatedAt: now,
@@ -219,12 +222,23 @@ export async function safeRetry(
     },
     write.id,
   );
-  const patch: Partial<WriteRow> = { retriedById: next.id, updatedAt: ctx.now() };
+  let resent = next;
+  if (write.patientInitials && !next.patientInitials) {
+    [resent = next] = await ctx.db
+      .update(writes)
+      .set({ patientInitials: write.patientInitials })
+      .where(eq(writes.id, next.id))
+      .returning();
+  }
   if (unknownOutcome) {
     await transitionWrite(ctx, write, "post_rejected", { statusDetail: `No booking found after the unanswered POST; resent as write #${next.id}.` });
   }
-  const [previous] = await ctx.db.update(writes).set(patch).where(eq(writes.id, write.id)).returning();
-  return { outcome: "resent", write: next, previous: previous! };
+  const [previous] = await ctx.db
+    .update(writes)
+    .set({ retriedById: next.id, updatedAt: ctx.now() })
+    .where(eq(writes.id, write.id))
+    .returning();
+  return { outcome: "resent", write: resent, previous: previous! };
 }
 
 async function findOriginal(ctx: SentinelContext, write: WriteRow): Promise<Appointment | undefined> {
@@ -285,7 +299,11 @@ export async function applyAppointmentEvidence(
  * stuck when their location's sync can't take writes, and un-stick them when it recovers.
  */
 export async function checkPendingWrites(ctx: SentinelContext): Promise<void> {
-  const pending = await ctx.db.select().from(writes).where(inArray(writes.status, ["accepted", "stuck"]));
+  const pendingStatus = inArray(writes.status, ["accepted", "stuck"]);
+  const pending = await ctx.db
+    .select()
+    .from(writes)
+    .where(ctx.scope ? and(pendingStatus, eq(writes.subdomain, ctx.scope)) : pendingStatus);
   const now = ctx.now();
   for (const write of pending) {
     if (write.nexAppointmentId === null) continue;
