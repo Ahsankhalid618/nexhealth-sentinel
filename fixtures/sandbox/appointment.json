@@ -1,0 +1,92 @@
+{
+  "source": "https://nexhealth.info",
+  "retrieved_at": "2026-11-17T20:41:44.066Z",
+  "request": {
+    "method": "GET",
+    "path": "/appointments/{id}",
+    "query": {
+      "subdomain": "eds-solutions-demo-practice"
+    }
+  },
+  "status": 200,
+  "response": {
+    "code": true,
+    "description": null,
+    "error": null,
+    "data": {
+      "id": 1796473802,
+      "patient_id": 541160017,
+      "provider_id": 541159954,
+      "provider_name": "Jonas Salk",
+      "start_time": "2026-11-26T19:15:00.000Z",
+      "confirmed": false,
+      "patient_missed": false,
+      "created_at": "2026-11-07T12:30:06.932Z",
+      "updated_at": "2026-11-17T17:45:06.596Z",
+      "note": null,
+      "end_time": "2026-11-26T20:00:00.000Z",
+      "unavailable": false,
+      "cancelled": false,
+      "timezone": "America/New_York",
+      "institution_id": 24796,
+      "appointment_type_id": 1289111,
+      "checkin_at": null,
+      "location_id": 361105,
+      "foreign_id": "a44fca72-e720-415e-815d-28a25c897eb5",
+      "foreign_id_type": "remote_db-dentrix-DataSource-41629",
+      "misc": {},
+      "last_sync_time": null,
+      "patient_confirmed": false,
+      "created_by_user_id": null,
+      "is_guardian": false,
+      "patient_confirmed_at": null,
+      "cancelled_at": null,
+      "is_new_clients_patient": null,
+      "confirmed_at": null,
+      "sooner_if_possible": false,
+      "operatory_id": 325732,
+      "deleted": false,
+      "checked_out": false,
+      "checked_out_at": null,
+      "referrer": null,
+      "is_past_patient": true,
+      "timezone_offset": "-05:00",
+      "patient": {
+        "id": 541160017,
+        "email": "[redacted]",
+        "first_name": "[redacted]",
+        "middle_name": null,
+        "last_name": "[redacted]",
+        "name": "[redacted]",
+        "created_at": "2026-11-17T17:44:55.589Z",
+        "updated_at": "2026-11-17T17:45:10.596Z",
+        "institution_id": 24796,
+        "foreign_id": "[redacted]",
+        "foreign_id_type": "remote_db-dentrix-DataSource-41629",
+        "bio": {
+          "gender": "[redacted]",
+          "phone_number": "[redacted]",
+          "date_of_birth": "[redacted]",
+          "verified_mobile": "[redacted]"
+        },
+        "inactive": false,
+        "last_sync_time": null,
+        "guarantor_id": null,
+        "unsubscribe_sms": true,
+        "balance": {
+          "amount": "[redacted]",
+          "currency": "[redacted]"
+        },
+        "billing_type": null,
+        "chart_id": null,
+        "preferred_language": null,
+        "preferred_locale": null,
+        "location_ids": [
+          361105
+        ],
+        "guarantor": null
+      }
+    },
+    "count": null
+  }
+}

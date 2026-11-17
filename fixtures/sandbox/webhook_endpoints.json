@@ -1,0 +1,16 @@
+{
+  "source": "https://nexhealth.info",
+  "retrieved_at": "2026-11-17T20:41:45.171Z",
+  "request": {
+    "method": "GET",
+    "path": "/webhook_endpoints"
+  },
+  "status": 200,
+  "response": {
+    "code": true,
+    "description": null,
+    "error": null,
+    "data": [],
+    "count": 0
+  }
+}

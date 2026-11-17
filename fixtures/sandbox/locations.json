@@ -1,0 +1,56 @@
+{
+  "source": "https://nexhealth.info",
+  "retrieved_at": "2026-11-17T20:41:43.862Z",
+  "request": {
+    "method": "GET",
+    "path": "/locations",
+    "query": {
+      "subdomain": "eds-solutions-demo-practice"
+    }
+  },
+  "status": 200,
+  "response": {
+    "code": true,
+    "description": null,
+    "error": null,
+    "data": [
+      {
+        "id": 24796,
+        "name": "EDS Solutions Demo Practice",
+        "subdomain": "eds-solutions-demo-practice",
+        "locations": [
+          {
+            "id": 361105,
+            "name": "Green River Dental",
+            "institution_id": 24796,
+            "street_address": "[redacted]",
+            "street_address_2": null,
+            "city": "New York",
+            "state": "NY",
+            "zip_code": "[redacted]",
+            "country_code": null,
+            "created_at": "2026-11-17T17:44:56.185Z",
+            "updated_at": "2026-11-17T17:45:38.958Z",
+            "latitude": -39.40035768049127,
+            "longitude": -69.91424997794276,
+            "phone_number": "[redacted]",
+            "foreign_id": "0",
+            "foreign_id_type": "remote_db-dentrix-DataSource-41629",
+            "email": "[redacted]",
+            "tz": "America/New_York",
+            "last_sync_time": null,
+            "insert_appt_client": true,
+            "map_by_operatory": true,
+            "appt_types_map_by_operatory": false,
+            "set_availability_by_operatory": false,
+            "inactive": false,
+            "specialty": null,
+            "wlogo": "/missing.png",
+            "weight": 1
+          }
+        ]
+      }
+    ],
+    "count": 1
+  }
+}
