@@ -37,9 +37,53 @@ interface MockSync {
   locationIds: number[];
 }
 
+interface MockProvider {
+  subdomain: string;
+  id: number;
+  name: string;
+  location_id: number;
+}
+
 interface MockAppointment extends Appointment {
   subdomain: string;
   pendingInsertion: boolean;
+  foreign_id_type?: string | null;
+  provider_name?: string;
+  appointment_type_id?: number | null;
+  confirmed?: boolean;
+  note?: string | null;
+  misc?: Record<string, unknown>;
+}
+
+/** Extra fields stored on locations for GET /locations (full) vs GET /institutions (slim). */
+interface MockLocation extends Location {
+  city?: string | null;
+  state?: string | null;
+  street_address?: string | null;
+  street_address_2?: string | null;
+  zip_code?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  foreign_id?: string;
+  last_sync_time?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  appt_types_map_by_operatory?: boolean;
+  set_availability_by_operatory?: boolean;
+  specialty?: string | null;
+  wlogo?: string;
+  weight?: number;
+  country_code?: string | null;
+}
+
+interface MockInstitution extends Institution {
+  created_at?: string;
+  updated_at?: string;
+  emrs?: string[];
+  country_code?: string;
+  locations: MockLocation[];
 }
 
 export interface Delivery {
@@ -84,7 +128,8 @@ const fail = (status: number, ...errors: string[]) => json(status, { code: false
 const PATIENT_NAMES = ["Avery Testcase", "Jordan Sample", "Riley Mockwell", "Casey Fixture", "Morgan Demo"];
 
 export class MockNexHealth {
-  readonly institutions: Institution[] = [];
+  readonly institutions: MockInstitution[] = [];
+  readonly providers: MockProvider[] = [];
   readonly syncs: MockSync[] = [];
   readonly appointments = new Map<number, MockAppointment>();
   readonly endpoints: WebhookEndpoint[] = [];
@@ -96,7 +141,8 @@ export class MockNexHealth {
   transport: Transport | null = null;
 
   private readonly tokens = new Map<string, number>();
-  private ids = { appointment: 900_000, endpoint: 1, subscription: 1, delivery: 1 };
+  private ids = { appointment: 900_000, endpoint: 1, subscription: 1, delivery: 1, provider: 500_000 };
+  private sampleApptId: number | null = null;
 
   constructor(
     private readonly now: () => Date,
@@ -105,24 +151,101 @@ export class MockNexHealth {
 
   // ---- world setup ------------------------------------------------------------------------
 
-  addInstitution(id: number, name: string, subdomain: string): Institution {
-    const inst = { id, name, subdomain, locations: [] };
+  addInstitution(id: number, name: string, subdomain: string): MockInstitution {
+    const at = this.now().toISOString();
+    const inst: MockInstitution = {
+      id,
+      name,
+      subdomain,
+      locations: [],
+      created_at: at,
+      updated_at: at,
+      emrs: ["dentrix"],
+      country_code: "US",
+    };
     this.institutions.push(inst);
     return inst;
   }
 
-  addLocation(subdomain: string, loc: { id: number; name: string; tz: string }): Location {
+  addProvider(subdomain: string, fields: { id?: number; name: string; location_id: number }): MockProvider {
+    const provider: MockProvider = {
+      subdomain,
+      id: fields.id ?? ++this.ids.provider,
+      name: fields.name,
+      location_id: fields.location_id,
+    };
+    this.providers.push(provider);
+    return provider;
+  }
+
+  addLocation(subdomain: string, loc: { id: number; name: string; tz: string } & Partial<MockLocation>): MockLocation {
     const inst = this.institution(subdomain);
-    const location: Location = {
+    const at = this.now().toISOString();
+    const location: MockLocation = {
       ...loc,
       institution_id: inst.id,
-      foreign_id_type: "msg-dentrix-DataSource-1",
+      foreign_id: loc.foreign_id ?? "0",
+      foreign_id_type: loc.foreign_id_type ?? `remote_db-dentrix-DataSource-${inst.id}`,
       insert_appt_client: true,
-      map_by_operatory: false,
+      map_by_operatory: true,
       inactive: false,
+      city: loc.city ?? "New York",
+      state: loc.state ?? "NY",
+      street_address: loc.street_address ?? "123 Demo Street",
+      street_address_2: loc.street_address_2 ?? null,
+      zip_code: loc.zip_code ?? "10001",
+      email: loc.email ?? "office@demo.example",
+      phone_number: loc.phone_number ?? "5555550100",
+      created_at: at,
+      updated_at: at,
+      last_sync_time: null,
+      latitude: loc.latitude ?? -39.40035768049127,
+      longitude: loc.longitude ?? -69.91424997794276,
+      appt_types_map_by_operatory: false,
+      set_availability_by_operatory: false,
+      specialty: null,
+      wlogo: "/missing.png",
+      weight: 1,
+      country_code: null,
     };
     inst.locations.push(location);
     return location;
+  }
+
+  /** Practice shaped like the real sandbox captures (no sync, dentrix foreign_id_type, last_sync_time null). */
+  seedSandboxPractice(): void {
+    const sub = "eds-solutions-demo-practice";
+    this.addInstitution(24796, "EDS Solutions Demo Practice", sub);
+    const loc = this.addLocation(sub, { id: 361105, name: "Green River Dental", tz: "America/New_York" });
+    const provider = this.addProvider(sub, { id: 541159954, name: "Demo Provider", location_id: loc.id });
+    const synced = this.seedAppointment(sub, {
+      location_id: loc.id,
+      provider_id: provider.id,
+      provider_name: provider.name,
+      operatory_id: 325732,
+      start_time: "2026-11-26T19:15:00.000Z",
+      end_time: "2026-11-26T20:00:00.000Z",
+      foreign_id: "a44fca72-e720-415e-815d-28a25c897eb5",
+      foreign_id_type: loc.foreign_id_type,
+      appointment_type_id: 1289111,
+    });
+    this.seedAppointment(sub, {
+      location_id: loc.id,
+      provider_id: provider.id,
+      provider_name: provider.name,
+      operatory_id: 325731,
+      start_time: "2026-11-13T18:30:00.000Z",
+      end_time: "2026-11-13T19:15:00.000Z",
+      foreign_id: null,
+      foreign_id_type: "nex",
+      misc: { "is_terminal": false, "has_lab_requisition_linkable?": false, "has_case_tracker_linkable?": false },
+    });
+    this.sampleApptId = synced.id;
+  }
+
+  sampleAppointmentId(): number {
+    if (this.sampleApptId === null) throw new Error("call seedSandboxPractice first");
+    return this.sampleApptId;
   }
 
   addSync(subdomain: string, name: string, locationIds: number[]): void {
@@ -143,21 +266,36 @@ export class MockNexHealth {
     });
   }
 
-  seedAppointment(subdomain: string, fields: Partial<Appointment> & { location_id: number; start_time: string }): MockAppointment {
+  seedAppointment(
+    subdomain: string,
+    fields: Partial<Omit<MockAppointment, "id" | "subdomain" | "pendingInsertion">> & { location_id: number; start_time: string },
+  ): MockAppointment {
     const id = ++this.ids.appointment;
     const at = this.now().toISOString();
+    const loc = this.institution(subdomain).locations.find((l) => l.id === fields.location_id);
+    const foreignId =
+      fields.foreign_id !== undefined
+        ? fields.foreign_id
+        : `${id.toString(16).padStart(8, "0")}-demo-0000-0000-000000000000`;
+    const foreignType =
+      fields.foreign_id_type ??
+      (fields.foreign_id === null ? "nex" : (loc?.foreign_id_type ?? "remote_db-dentrix-DataSource-1"));
     const appt: MockAppointment = {
-      id,
-      patient_id: 4000 + (id % 1000),
-      provider_id: 415858,
-      operatory_id: null,
-      end_time: null,
-      foreign_id: String(100_000 + id),
-      last_sync_time: at,
-      created_at: at,
-      updated_at: at,
-      cancelled: false,
       ...fields,
+      id,
+      patient_id: fields.patient_id ?? 4000 + (id % 1000),
+      provider_id: fields.provider_id ?? 415858,
+      provider_name: fields.provider_name ?? this.providerName(subdomain, fields.provider_id ?? 415858),
+      operatory_id: fields.operatory_id ?? null,
+      end_time: fields.end_time ?? null,
+      foreign_id: foreignId,
+      foreign_id_type: foreignType,
+      last_sync_time: null,
+      created_at: fields.created_at ?? at,
+      updated_at: fields.updated_at ?? at,
+      cancelled: fields.cancelled ?? false,
+      appointment_type_id: fields.appointment_type_id ?? null,
+      misc: fields.misc ?? {},
       subdomain,
       pendingInsertion: false,
     };
@@ -195,8 +333,10 @@ export class MockNexHealth {
       if (appt.subdomain !== subdomain || !appt.pendingInsertion) continue;
       if (this.syncFor(subdomain, appt.location_id)?.entry.write_status !== "green") continue;
       appt.pendingInsertion = false;
-      appt.foreign_id = String(100_000 + appt.id);
-      appt.last_sync_time = appt.updated_at = this.now().toISOString();
+      const loc = this.institution(subdomain).locations.find((l) => l.id === appt.location_id);
+      appt.foreign_id = appt.foreign_id ?? `${appt.id.toString(16)}-mock-0000-0000-000000000000`;
+      appt.foreign_id_type = loc?.foreign_id_type ?? appt.foreign_id_type ?? "remote_db-dentrix-DataSource-1";
+      appt.updated_at = this.now().toISOString();
       this.emit(subdomain, "Appointment", "appointment_insertion.complete", { appointment: this.publicAppt(appt) });
       written.push(appt.id);
     }
@@ -469,7 +609,13 @@ export class MockNexHealth {
       auth: false,
       handler: ({ headers }) => this.authenticate(headers),
     },
-    { method: "GET", path: "/institutions", query: [], required: [], handler: () => this.list(this.institutions) },
+    {
+      method: "GET",
+      path: "/institutions",
+      query: [],
+      required: [],
+      handler: () => this.list(this.institutions.map((i) => this.publicInstitution(i))),
+    },
     {
       method: "GET",
       path: "/locations",
@@ -477,8 +623,26 @@ export class MockNexHealth {
       required: [],
       handler: ({ query }) => {
         const sub = query.get("subdomain");
-        return this.list(this.institutions.filter((i) => !sub || i.subdomain === sub));
+        return this.list(
+          this.institutions
+            .filter((i) => !sub || i.subdomain === sub)
+            .map((i) => ({ ...i, locations: i.locations.map((l) => this.publicLocationFull(l)) })),
+        );
       },
+    },
+    {
+      method: "GET",
+      path: "/providers",
+      query: ["subdomain", "location_id", "inactive", "per_page", "foreign_id"],
+      required: ["subdomain"],
+      handler: ({ query }) => this.listProviders(query),
+    },
+    {
+      method: "GET",
+      path: "/available_slots",
+      query: ["subdomain", "start_date", "days", "lids[]", "pids[]", "appointment_type_id", "slot_length"],
+      required: ["subdomain", "start_date", "days", "lids[]"],
+      handler: ({ query }) => this.availableSlots(query),
     },
     {
       method: "GET",
@@ -498,7 +662,7 @@ export class MockNexHealth {
       handler: ({ params, query }) => {
         const appt = this.appointments.get(Number(params.id));
         if (!appt || appt.subdomain !== query.get("subdomain")) return fail(404, "Appointment not found");
-        return json(200, { code: true, description: null, error: null, data: this.publicAppt(appt, true), count: null });
+        return json(200, { code: true, description: null, error: null, data: this.apptDetail(appt), count: null });
       },
     },
     {
@@ -652,13 +816,14 @@ export class MockNexHealth {
       code: true,
       description: null,
       error: null,
-      data: page.map((a) => this.publicAppt(a)),
+      data: page.map((a) => this.apptListRow(a)),
       page_info: {
         has_previous_page: offset > 0,
         has_next_page: offset + perPage < rows.length,
         start_cursor: page.length ? encodeCursor(offset) : null,
         end_cursor: page.length ? encodeCursor(offset + page.length) : null,
       },
+      // Paginated GET /appointments omits count (per live sandbox).
     });
   }
 
@@ -684,6 +849,7 @@ export class MockNexHealth {
       end_time: appt!.end_time === undefined ? null : String(appt!.end_time),
       // "An appointment that NexHealth has not written yet has foreign_id set to null and last_sync_time set to null."
       foreign_id: null,
+      foreign_id_type: "nex",
       last_sync_time: null,
       created_at: at,
       updated_at: at,
@@ -695,13 +861,13 @@ export class MockNexHealth {
       code: true,
       description: null,
       error: null,
-      data: { appt: this.publicAppt(created), stripe_client_secret: null },
+      data: { appt: this.apptListRow(created), stripe_client_secret: null },
     });
   }
 
   // ---- helpers ----------------------------------------------------------------------------
 
-  private institution(subdomain: string): Institution {
+  private institution(subdomain: string): MockInstitution {
     const inst = this.institutions.find((i) => i.subdomain === subdomain);
     if (!inst) throw new Error(`no institution ${subdomain}`);
     return inst;
@@ -717,21 +883,238 @@ export class MockNexHealth {
     return appt;
   }
 
-  /** Mock patients have obviously fake names so the redaction path is exercised. */
-  private publicAppt(appt: MockAppointment, withPatient = false): Appointment {
-    const { subdomain: _subdomain, pendingInsertion: _pending, ...rest } = appt;
-    if (!withPatient) return rest;
+  private providerName(subdomain: string, providerId: number): string {
+    return this.providers.find((p) => p.subdomain === subdomain && p.id === providerId)?.name ?? "Demo Provider";
+  }
+
+  private listProviders(query: URLSearchParams): Response {
+    const sub = query.get("subdomain");
+    const locationId = query.has("location_id") ? Number(query.get("location_id")) : null;
+    let rows = this.providers.filter((p) => (!sub || p.subdomain === sub) && (locationId === null || p.location_id === locationId));
+    if (!rows.length && sub && locationId !== null) {
+      rows = [{ subdomain: sub, id: 541159954, name: "Demo Provider", location_id: locationId }];
+    }
+    return this.list(
+      rows.map((p) => ({
+        id: p.id,
+        email: "provider@demo.example",
+        first_name: p.name.split(" ")[0],
+        last_name: p.name.split(" ").slice(1).join(" ") || "Provider",
+        name: p.name,
+        created_at: this.now().toISOString(),
+        updated_at: this.now().toISOString(),
+        institution_id: this.institution(p.subdomain).id,
+        foreign_id: "0",
+        foreign_id_type: null,
+        bio: { phone_number: "5555550101", gender: null, date_of_birth: null },
+        inactive: false,
+        last_sync_time: null,
+        display_name: null,
+        npi: null,
+        tin: null,
+        state_license: null,
+        specialty: null,
+        nexhealth_specialty: null,
+        profile_url: "/missing.png",
+        locations: [{ id: p.location_id, name: this.institution(p.subdomain).locations[0]?.name ?? "Main" }],
+        provider_requestables: [],
+      })),
+    );
+  }
+
+  private availableSlots(query: URLSearchParams): Response {
+    const sub = query.get("subdomain")!;
+    const lids = query.getAll("lids[]").map(Number);
+    const pids = query.getAll("pids[]").map(Number);
+    if (!sub || !lids.length || (!pids.length && !query.has("appointment_type_id"))) {
+      return fail(400, "subdomain, lids[], and pids[] or appointment_type_id are required");
+    }
+    const loc = lids[0]!;
+    const pid = pids[0] ?? 0;
+    const start = query.get("start_date") ?? this.now().toISOString().slice(0, 10);
+    const days = Number(query.get("days") ?? 1);
+    const slots: Array<{ time: string; end_time: string; operatory_id: number; working_hour_label_id: null }> = [];
+    for (let i = 0; i < Math.max(2, days * 2); i++) {
+      const minute = 45 + i * 15;
+      const hour = 15 + Math.floor(minute / 60);
+      const mm = minute % 60;
+      slots.push({
+        time: `${start}T${String(hour).padStart(2, "0")}:${String(mm).padStart(2, "0")}:00.000-05:00`,
+        end_time: `${start}T${String(hour).padStart(2, "0")}:${String(mm + 15).padStart(2, "0")}:00.000-05:00`,
+        operatory_id: 325731,
+        working_hour_label_id: null,
+      });
+    }
+    return json(200, { code: true, description: null, error: null, data: [{ lid: loc, pid, slots }], count: 1 });
+  }
+
+  private publicInstitution(inst: MockInstitution) {
+    return {
+      id: inst.id,
+      name: inst.name,
+      created_at: inst.created_at,
+      updated_at: inst.updated_at,
+      subdomain: inst.subdomain,
+      phone_number: null,
+      emrs: inst.emrs ?? ["dentrix"],
+      country_code: inst.country_code ?? "US",
+      is_appt_categories_location_specific: true,
+      appointment_types_location_scoped: true,
+      is_sync_notifications: true,
+      notify_insert_fails: true,
+      wlogo: "/missing.png",
+      is_appt_booking_patient_type_activated: true,
+      is_appt_booking_insurance_activated: false,
+      show_online_booking_no_insurance_option: true,
+      request_online_booking_location_permissions: false,
+      gtm_tags: [],
+      show_map: false,
+      logo_location_scoped: false,
+      locations: inst.locations.map((l) => this.publicLocationSlim(l)),
+    };
+  }
+
+  private publicLocationSlim(loc: MockLocation) {
+    return {
+      id: loc.id,
+      name: loc.name,
+      street_address: loc.street_address,
+      street_address_2: loc.street_address_2 ?? null,
+      city: loc.city,
+      state: loc.state,
+      zip_code: loc.zip_code,
+      phone_number: loc.phone_number,
+      email: loc.email,
+      inactive: loc.inactive ?? false,
+    };
+  }
+
+  private publicLocationFull(loc: MockLocation) {
+    return {
+      id: loc.id,
+      name: loc.name,
+      institution_id: loc.institution_id,
+      street_address: loc.street_address,
+      street_address_2: loc.street_address_2 ?? null,
+      city: loc.city,
+      state: loc.state,
+      zip_code: loc.zip_code,
+      country_code: null,
+      created_at: loc.created_at,
+      updated_at: loc.updated_at,
+      latitude: loc.latitude ?? null,
+      longitude: loc.longitude ?? null,
+      phone_number: loc.phone_number,
+      foreign_id: loc.foreign_id,
+      foreign_id_type: loc.foreign_id_type,
+      email: loc.email,
+      tz: loc.tz,
+      last_sync_time: loc.last_sync_time ?? null,
+      insert_appt_client: loc.insert_appt_client ?? true,
+      map_by_operatory: loc.map_by_operatory ?? true,
+      appt_types_map_by_operatory: false,
+      set_availability_by_operatory: false,
+      inactive: loc.inactive ?? false,
+      specialty: null,
+      wlogo: "/missing.png",
+      weight: 1,
+    };
+  }
+
+  private apptListRow(appt: MockAppointment) {
+    const inst = this.institution(appt.subdomain);
+    const loc = inst.locations.find((l) => l.id === appt.location_id);
+    return {
+      id: appt.id,
+      patient_id: appt.patient_id,
+      provider_id: appt.provider_id,
+      provider_name: appt.provider_name ?? this.providerName(appt.subdomain, appt.provider_id),
+      start_time: appt.start_time,
+      confirmed: appt.confirmed ?? false,
+      patient_missed: false,
+      created_at: appt.created_at,
+      updated_at: appt.updated_at,
+      note: appt.note ?? null,
+      end_time: appt.end_time,
+      unavailable: false,
+      cancelled: appt.cancelled ?? false,
+      timezone: loc?.tz ?? "America/New_York",
+      institution_id: inst.id,
+      appointment_type_id: appt.appointment_type_id ?? null,
+      checkin_at: null,
+      location_id: appt.location_id,
+      foreign_id: appt.foreign_id,
+      foreign_id_type: appt.foreign_id_type ?? (appt.foreign_id ? loc?.foreign_id_type : "nex"),
+      misc: appt.misc ?? {},
+      last_sync_time: appt.last_sync_time ?? null,
+      patient_confirmed: false,
+      created_by_user_id: null,
+      is_guardian: false,
+      patient_confirmed_at: null,
+      cancelled_at: null,
+      is_new_clients_patient: null,
+      confirmed_at: null,
+      sooner_if_possible: false,
+      operatory_id: appt.operatory_id ?? null,
+      deleted: false,
+      checked_out: false,
+      checked_out_at: null,
+      referrer: null,
+      is_past_patient: true,
+      timezone_offset: "-05:00",
+    };
+  }
+
+  private apptDetail(appt: MockAppointment) {
     const name = PATIENT_NAMES[appt.patient_id % PATIENT_NAMES.length]!;
     const [first_name, last_name] = name.split(" ");
-    return { ...rest, patient: { id: appt.patient_id, name, first_name, last_name } };
+    return {
+      ...this.apptListRow(appt),
+      patient: {
+        id: appt.patient_id,
+        email: "patient@demo.example",
+        first_name,
+        middle_name: null,
+        last_name,
+        name,
+        created_at: appt.created_at,
+        updated_at: appt.updated_at,
+        institution_id: this.institution(appt.subdomain).id,
+        foreign_id: "patient-demo-foreign-id",
+        foreign_id_type: this.institution(appt.subdomain).locations[0]?.foreign_id_type,
+        bio: { gender: "Female", phone_number: "5555550102", date_of_birth: "1990-01-01", verified_mobile: "5555550102" },
+        inactive: false,
+        last_sync_time: null,
+        guarantor_id: null,
+        unsubscribe_sms: true,
+        balance: { amount: "0.00", currency: "USD" },
+        billing_type: null,
+        chart_id: null,
+        preferred_language: null,
+        preferred_locale: null,
+        location_ids: [appt.location_id],
+        guarantor: null,
+      },
+    };
   }
+
+  /** For webhooks: list row without nesting patient (inclusion uses apptDetail separately). */
+  private publicAppt(appt: MockAppointment, withPatient = false): Record<string, unknown> {
+    return withPatient ? this.apptDetail(appt) : this.apptListRow(appt);
+  }
+
 }
 
 function encodeCursor(offset: number): string {
-  return Buffer.from(`o:${offset}`).toString("base64url");
+  return Buffer.from(JSON.stringify({ o: offset })).toString("base64url");
 }
 
 function decodeCursor(cursor: string): number {
-  const n = Number(Buffer.from(cursor, "base64url").toString("utf8").replace(/^o:/, ""));
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as { o?: number };
+    return typeof parsed.o === "number" && parsed.o >= 0 ? parsed.o : 0;
+  } catch {
+    const legacy = Number(Buffer.from(cursor, "base64url").toString("utf8").replace(/^o:/, ""));
+    return Number.isFinite(legacy) && legacy >= 0 ? legacy : 0;
+  }
 }
