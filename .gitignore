@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# local database (PGlite) and env files
+.data/
+.env
+.env.local
+.env.*.local
+
+# webhook captures can hold real sandbox payloads; review before committing
+fixtures/sandbox/captures/
+
+.DS_Store
+.vercel
