@@ -1,0 +1,22 @@
+name: Sentinel tick
+
+on:
+  schedule:
+  - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    if: vars.SENTINEL_URL != ''
+    steps:
+      - name: POST /api/cron/tick
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SENTINEL_URL: ${{ vars.SENTINEL_URL }}
+        run: |
+          code=$(curl -sS -o /tmp/tick.json -w "%{http_code}" -X POST "${SENTINEL_URL%/}/api/cron/tick" \
+            -H "authorization: Bearer ${CRON_SECRET}")
+          echo "HTTP ${code}"
+          cat /tmp/tick.json
+          test "$code" = "200" -o "$code" = "500"
