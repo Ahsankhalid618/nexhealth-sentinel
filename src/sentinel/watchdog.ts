@@ -1,6 +1,6 @@
-import { syncHealth } from "@/db/schema";
 import { raiseAlert, resolveAlerts } from "./alerts";
 import type { SentinelContext } from "./context";
+import { monitoredLocations } from "./sync-monitor";
 
 /** Without these, tracked writes and sync outages can only be caught by polling. */
 export const RECOMMENDED_SUBSCRIPTIONS: Array<[resourceType: string, event: string]> = [
@@ -35,7 +35,7 @@ export async function checkWebhookEndpoints(ctx: SentinelContext): Promise<Watch
     });
   }
 
-  const subdomains = [...new Set((await ctx.db.select({ s: syncHealth.subdomain }).from(syncHealth)).map((r) => r.s))];
+  const subdomains = [...new Set((await monitoredLocations(ctx)).map((r) => r.subdomain))];
 
   for (const endpoint of endpoints) {
     const key = `endpoint:${endpoint.id}:inactive`;

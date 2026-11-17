@@ -13,8 +13,14 @@ const FALLBACK_TZ = "America/New_York";
 export const NO_SYNC_DETAIL = "No sync behind this location: NexHealth accepts the booking but it will never reach an EHR.";
 
 /** Adds every location NexHealth reports (GET /locations) to the monitor, with its name and time zone. */
+/** Locations under watch, limited to ctx.scope when set. */
+export async function monitoredLocations(ctx: SentinelContext): Promise<SyncHealthRow[]> {
+  const query = ctx.db.select().from(syncHealth);
+  return ctx.scope ? query.where(eq(syncHealth.subdomain, ctx.scope)) : query;
+}
+
 export async function discoverLocations(ctx: SentinelContext, subdomain?: string): Promise<number> {
-  const institutions = await ctx.nex.getLocations(subdomain);
+  const institutions = await ctx.nex.getLocations(subdomain ?? ctx.scope);
   let count = 0;
   for (const inst of institutions) {
     for (const loc of inst.locations ?? []) {
@@ -109,7 +115,7 @@ const fromEntry = (e: SyncStatusEntry): StatusUpdate => ({
 
 /** The backstop: webhooks can be skipped, so poll GET /sync_status for every monitored institution. */
 export async function pollSyncStatus(ctx: SentinelContext): Promise<void> {
-  const rows = await ctx.db.select().from(syncHealth);
+  const rows = await monitoredLocations(ctx);
   const subdomains = [...new Set(rows.map((r) => r.subdomain))];
   for (const subdomain of subdomains) {
     const entries = await ctx.nex.getSyncStatus(subdomain);
@@ -154,7 +160,7 @@ export function stateOf(ctx: SentinelContext, row: SyncHealthRow): SyncState | "
 
 /** Classify every location and raise or resolve alerts. */
 export async function evaluateSyncHealth(ctx: SentinelContext): Promise<void> {
-  const rows = await ctx.db.select().from(syncHealth);
+  const rows = await monitoredLocations(ctx);
   const now = ctx.now();
   for (const row of rows) {
     const state = stateOf(ctx, row);

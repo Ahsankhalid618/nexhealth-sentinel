@@ -20,6 +20,8 @@ export interface SentinelContext {
   now: () => Date;
   /** Called once for every newly raised alert. */
   notify: (alert: NewAlert) => Promise<void>;
+  /** Limits timer work and alert keys to one institution, so simulator runs can share a database. */
+  scope?: string;
 }
 
 /** Posts critical and warning alerts to a Slack or Discord incoming webhook. Info alerts stay on the dashboard. */

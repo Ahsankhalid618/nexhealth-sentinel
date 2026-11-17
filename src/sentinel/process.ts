@@ -17,7 +17,7 @@ export async function processPendingEvents(ctx: SentinelContext): Promise<number
   const pending = await ctx.db
     .select({ id: events.id })
     .from(events)
-    .where(isNull(events.processedAt))
+    .where(ctx.scope ? and(isNull(events.processedAt), eq(events.subdomain, ctx.scope)) : isNull(events.processedAt))
     .orderBy(asc(events.id))
     .limit(500);
   let processed = 0;
