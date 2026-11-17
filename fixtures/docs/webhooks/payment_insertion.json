@@ -1,0 +1,30 @@
+{
+  "institution_id": 1,
+  "subdomain": "test-subdomain",
+  "webhook_subscription_id": 2,
+  "resource_type": "Payment",
+  "event_name": "payment_insertion",
+  "event_time": "2024-03-21T17:52:47.824Z",
+  "data": {
+    "payment": {
+      "patient_id": 3,
+      "value": {
+        "amount": "62.00",
+        "currency": "USD"
+      },
+      "paid_at": "2020-06-05T20:16:57.007Z",
+      "notes": null,
+      "transaction_id": "NHP:123456",
+      "method": "card",
+      "charge_splits": {
+        "1": "-25.00",
+        "2": "-25.00"
+      },
+      "provider_splits": {
+        "1": "-25.00",
+        "2": "-25.00"
+      },
+      "type_name": "Credit Card"
+    }
+  }
+}
