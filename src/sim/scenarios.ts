@@ -99,7 +99,7 @@ type Runner = (o: Required<ScenarioOptions>) => Promise<{ world: DemoWorld; chec
 const RUNNERS: Record<ScenarioName, Runner> = {
   async happy({ db, day }) {
     const w = await DemoWorld.create({ db, scenario: "happy", timezone: "America/New_York", day, start: "09:00" });
-    const booked = await w.book(w.at("14:00"), "Avery Testcase", "demo-happy-1");
+    const booked = await w.book(w.at("14:00"), "Avery Testcase", "sim-happy-1");
     w.log(`Booked 2:00 PM for A.T. NexHealth answered 201: accepted, not yet written (write #${booked.write.id} ${booked.write.status}).`);
     await w.advanceTo(w.at("09:07"));
     w.mock.syncPendingWrites(w.subdomain);
@@ -107,7 +107,7 @@ const RUNNERS: Record<ScenarioName, Runner> = {
     const [write] = await writesOf(w);
     w.log(`The office sync wrote it. appointment_insertion.complete arrived; write is ${write!.status}, foreign_id ${write!.foreignId}.`);
 
-    const replay = await w.book(w.at("14:00"), "Avery Testcase", "demo-happy-1");
+    const replay = await w.book(w.at("14:00"), "Avery Testcase", "sim-happy-1");
     w.log(`Same request sent again with the same client key: ${replay.replayed ? "returned the existing write, nothing sent" : "sent again"}.`);
     await w.advanceTo(w.at("09:30"));
 

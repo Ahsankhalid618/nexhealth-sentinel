@@ -6,6 +6,7 @@ import type { SyncStatusEntry } from "@/nexhealth/types";
 import { raiseAlert, resolveAlerts } from "./alerts";
 import { officeHoursFor } from "./config";
 import type { SentinelContext } from "./context";
+import { inScope } from "./scope";
 import { formatLocal } from "./time";
 
 const FALLBACK_TZ = "America/New_York";
@@ -15,8 +16,7 @@ export const NO_SYNC_DETAIL = "No sync behind this location: NexHealth accepts t
 /** Adds every location NexHealth reports (GET /locations) to the monitor, with its name and time zone. */
 /** Locations under watch, limited to ctx.scope when set. */
 export async function monitoredLocations(ctx: SentinelContext): Promise<SyncHealthRow[]> {
-  const query = ctx.db.select().from(syncHealth);
-  return ctx.scope ? query.where(eq(syncHealth.subdomain, ctx.scope)) : query;
+  return ctx.db.select().from(syncHealth).where(inScope(ctx, syncHealth.subdomain));
 }
 
 export async function discoverLocations(ctx: SentinelContext, subdomain?: string): Promise<number> {

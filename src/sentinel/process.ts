@@ -2,6 +2,7 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import type { WriteSignal } from "@/core/write-state";
 import { events, type EventRow } from "@/db/schema";
 import type { SentinelContext } from "./context";
+import { inScope } from "./scope";
 import { applySyncEvent, evaluateSyncHealth } from "./sync-monitor";
 import { recordVersion } from "./versions";
 import { applyAppointmentEvidence } from "./writes";
@@ -17,7 +18,7 @@ export async function processPendingEvents(ctx: SentinelContext): Promise<number
   const pending = await ctx.db
     .select({ id: events.id })
     .from(events)
-    .where(ctx.scope ? and(isNull(events.processedAt), eq(events.subdomain, ctx.scope)) : isNull(events.processedAt))
+    .where(and(isNull(events.processedAt), inScope(ctx, events.subdomain)))
     .orderBy(asc(events.id))
     .limit(500);
   let processed = 0;

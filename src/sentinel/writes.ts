@@ -9,6 +9,7 @@ import { officeHoursFor } from "./config";
 import type { SentinelContext } from "./context";
 import { NO_SYNC_DETAIL, ensureLocation, syncPreflight } from "./sync-monitor";
 import { isWithinOfficeHours } from "@/core/sync-state";
+import { inScope } from "./scope";
 import { formatLocal } from "./time";
 import { recordVersion } from "./versions";
 
@@ -303,7 +304,7 @@ export async function checkPendingWrites(ctx: SentinelContext): Promise<void> {
   const pending = await ctx.db
     .select()
     .from(writes)
-    .where(ctx.scope ? and(pendingStatus, eq(writes.subdomain, ctx.scope)) : pendingStatus);
+    .where(and(pendingStatus, inScope(ctx, writes.subdomain)));
   const now = ctx.now();
   for (const write of pending) {
     if (write.nexAppointmentId === null) continue;

@@ -15,8 +15,8 @@ export interface InboxRequest {
 }
 
 export type InboxResult =
-  | { status: 200; outcome: "stored"; eventId: number }
-  | { status: 200; outcome: "duplicate"; eventId: number }
+  | { status: 200; outcome: "stored"; eventId: number; subdomain: string }
+  | { status: 200; outcome: "duplicate"; eventId: number; subdomain: string }
   | { status: 400 | 401; outcome: "rejected"; reason: string };
 
 function claimed(rawBody: Buffer): { subdomain: string | null; eventName: string | null } {
@@ -105,12 +105,12 @@ export async function receiveWebhook(ctx: SentinelContext, req: InboxRequest): P
     .onConflictDoNothing({ target: events.fingerprint })
     .returning({ id: events.id });
 
-  if (inserted[0]) return { status: 200, outcome: "stored", eventId: inserted[0].id };
+  if (inserted[0]) return { status: 200, outcome: "stored", eventId: inserted[0].id, subdomain: event.subdomain };
 
   const [dup] = await ctx.db
     .update(events)
     .set({ duplicateCount: sql`${events.duplicateCount} + 1`, lastDuplicateAt: now })
     .where(eq(events.fingerprint, fp))
     .returning({ id: events.id });
-  return { status: 200, outcome: "duplicate", eventId: dup!.id };
+  return { status: 200, outcome: "duplicate", eventId: dup!.id, subdomain: event.subdomain };
 }

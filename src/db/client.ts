@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
@@ -29,6 +30,7 @@ export async function openDb(url: string): Promise<DbHandle> {
   const { PGlite } = await import("@electric-sql/pglite");
   const { drizzle } = await import("drizzle-orm/pglite");
   const { migrate } = await import("drizzle-orm/pglite/migrator");
+  if (url !== "memory://") await mkdir(url, { recursive: true });
   const client = new PGlite(url === "memory://" ? undefined : url);
   const db = drizzle(client, { schema });
   await migrate(db, { migrationsFolder: MIGRATIONS });
