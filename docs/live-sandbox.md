@@ -1,6 +1,10 @@
 # Live sandbox guide
 
-Use this with a NexHealth **sandbox** API key. Nothing here has been verified against a real key in this repository yet; run the steps yourself and fix anything that diverges.
+Use this with a NexHealth **sandbox** API key.
+
+**Verified in this repo (2026-11-18):** read-only `scripts/sandbox-smoke.ts` against the real NexHealth sandbox — **12/12 checks passed**, 0 diffs vs the published docs. Sanitized captures are committed under [`fixtures/sandbox/`](../fixtures/sandbox/).
+
+**Not verified yet:** incoming **signed webhook** deliveries (HMAC over the raw body). Use steps 3–4 below with a public HTTPS URL and review captures before you trust production wiring.
 
 ## Prerequisites
 
@@ -42,7 +46,7 @@ NEXHEALTH_API_KEY=... npx tsx scripts/sandbox-smoke.ts
 
 Optional: `NEXHEALTH_SUBDOMAIN`, `NEXHEALTH_LOCATION_ID` if the key sees multiple institutions.
 
-Review `fixtures/sandbox/report.json`. Do not commit files that might contain unexpected fields until you have redacted them (the script redacts patient-like keys and never writes the key or token).
+Review `fixtures/sandbox/report.json`. The smoke script redacts patient-like fields and never writes API keys or bearer tokens; re-check before committing any new run.
 
 **Expected sandbox quirks (per docs):**
 

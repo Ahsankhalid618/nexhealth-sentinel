@@ -91,6 +91,7 @@ Checked against docs.nexhealth.com and `fixtures/docs/`.
 | SyncStatus webhook vs GET | Webhook example vs `GET /sync_status` | Webhook payload shows `locations: null`; GET returns `locations: [{id, name, …}]`. |
 | Pause behaviour unspecified | Webhooks, pause section | Whether retries scheduled during the pause are skipped, and whether the failure counter resets after a pause, is not stated. |
 | CLI README claims (not re-verified here) | Research cited a private NexHealth CLI README | Claims such as missing npm package, 24h tokens, 100 req/s could not be checked from this repo. Public auth docs describe ~1h JWT tokens and different rate limits. |
+| Rate-limit headers on 200s | Live sandbox smoke (2026-11-18) | Normal authenticated `GET`s returned **no** rate-limit response headers; only 429s are documented to carry `Retry-After`. |
 
 ## What we intentionally did not build
 
