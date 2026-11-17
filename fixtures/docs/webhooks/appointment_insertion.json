@@ -1,0 +1,51 @@
+{
+  "institution_id": 1,
+  "subdomain": "test-subdomain",
+  "webhook_subscription_id": 2,
+  "resource_type": "Appointment",
+  "event_name": "appointment_insertion.complete",
+  "event_time": "2024-03-21T17:52:47.824Z",
+  "data": {
+    "appointment": {
+      "id": 1822,
+      "patient_id": 2897,
+      "provider_id": 104,
+      "provider_name": "Dr. John Smith",
+      "start_time": "2020-06-05T20:16:57.007Z",
+      "confirmed": true,
+      "patient_missed": false,
+      "created_at": "2020-06-05T20:16:57.007Z",
+      "updated_at": "2020-06-05T20:16:57.007Z",
+      "note": "Patient has been having a cough for 3 days",
+      "end_time": "2020-06-05T20:16:57.007Z",
+      "unavailable": false,
+      "cancelled": false,
+      "timezone": "America/New_York",
+      "institution_id": 1,
+      "appointment_type_id": 27,
+      "checkin_at": "2020-06-05T20:16:57.007Z",
+      "location_id": 1,
+      "foreign_id": "94",
+      "foreign_id_type": "msg-dentrix-DataSource-100",
+      "misc": {
+        "is_booked_on_nexhealth": true
+      },
+      "last_sync_time": "2020-06-05T20:16:57.007Z",
+      "patient_confirmed": false,
+      "created_by_user_id": 197,
+      "is_guardian": false,
+      "patient_confirmed_at": "2020-06-05T20:16:57.007Z",
+      "cancelled_at": "2020-06-05T20:16:57.007Z",
+      "is_new_clients_patient": false,
+      "confirmed_at": "2020-06-05T20:16:57.007Z",
+      "sooner_if_possible": false,
+      "operatory_id": 181,
+      "deleted": false,
+      "checked_out": false,
+      "checked_out_at": "2020-06-05T20:16:57.007Z",
+      "referrer": "http://mypractice.com/book",
+      "is_past_patient": true,
+      "timezone_offset": "-4:00"
+    }
+  }
+}
