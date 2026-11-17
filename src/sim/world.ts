@@ -54,7 +54,7 @@ export class DemoWorld {
   private bookings = 0;
 
   private constructor(private readonly options: WorldOptions) {
-    this.subdomain = `demo-${options.scenario}`;
+    this.subdomain = `sim-${options.scenario}`;
     this.clock = zonedInstant(options.day, options.start, options.timezone);
     this.nextTickAt = (Math.floor(this.clock.getTime() / (10 * MIN)) + 1) * 10 * MIN;
     const now = () => new Date(this.clock);
@@ -184,7 +184,7 @@ export class DemoWorld {
 
 /** Removes everything a previous run of this demo left behind. Live data is never touched. */
 export async function resetDemo(db: Db, subdomain: string): Promise<void> {
-  if (!subdomain.startsWith("demo-")) throw new Error("only demo-* institutions can be reset");
+  if (!subdomain.startsWith("sim-")) throw new Error("only sim-* institutions can be reset");
   const ids = (await db.select({ id: writes.id }).from(writes).where(eq(writes.subdomain, subdomain))).map((r) => r.id);
   if (ids.length) await db.delete(writes).where(inArray(writes.id, ids));
   await db.delete(events).where(eq(events.subdomain, subdomain));

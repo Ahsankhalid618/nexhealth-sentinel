@@ -26,15 +26,15 @@ describe("simulator scenarios", () => {
   it("re-running a scenario replaces its previous data", async () => {
     await runScenario("happy", { db, day: DAY });
     await runScenario("happy", { db, day: DAY });
-    const rows = await db.select().from(writes).where(eq(writes.subdomain, "demo-happy"));
+    const rows = await db.select().from(writes).where(eq(writes.subdomain, "sim-happy"));
     expect(rows).toHaveLength(1);
   });
 
   it("never stores patient names, only initials", async () => {
     await runScenario("sync-down-business-hours", { db, day: DAY });
-    const stored = JSON.stringify(await db.select().from(events).where(eq(events.subdomain, "demo-sync-down-business-hours")));
+    const stored = JSON.stringify(await db.select().from(events).where(eq(events.subdomain, "sim-sync-down-business-hours")));
     expect(stored).not.toMatch(/Finley|Fixture|Testcase/);
-    const [write] = await db.select().from(writes).where(eq(writes.subdomain, "demo-sync-down-business-hours"));
+    const [write] = await db.select().from(writes).where(eq(writes.subdomain, "sim-sync-down-business-hours"));
     expect(write!.patientInitials).toBe("F.F.");
   });
 
