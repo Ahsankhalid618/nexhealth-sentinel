@@ -1,6 +1,7 @@
 import type { SentinelContext } from "./context";
 import { processPendingEvents } from "./process";
 import { reconcileAppointments, type ReconcileReport } from "./reconcile";
+import { purgeOldPayloads } from "./retention";
 import { discoverLocations, evaluateSyncHealth, pollSyncStatus } from "./sync-monitor";
 import { checkWebhookEndpoints, type WatchdogReport } from "./watchdog";
 import { checkPendingWrites } from "./writes";
@@ -31,5 +32,6 @@ export async function runTick(ctx: SentinelContext, options: { discover?: boolea
   await step("pending writes", () => checkPendingWrites(ctx));
   report.watchdog = await step("watchdog", () => checkWebhookEndpoints(ctx));
   report.reconcile = await step("reconcile", () => reconcileAppointments(ctx));
+  await step("retention", () => purgeOldPayloads(ctx));
   return report;
 }
